@@ -1,60 +1,25 @@
-/*
-ESP32-CAM Text recognition (Tesseract.js)
-Author : ChungYi Fu (Kaohsiung, Taiwan)  2020-6-30 15:00
-https://www.facebook.com/francefu
 
-https://github.com/naptha/tesseract.js#tesseractjs
-
-首頁
-http://APIP
-http://STAIP
-
-自訂指令格式 :  
-http://APIP/control?cmd=P1;P2;P3;P4;P5;P6;P7;P8;P9
-http://STAIP/control?cmd=P1;P2;P3;P4;P5;P6;P7;P8;P9
-
-預設AP端IP： 192.168.4.1
-http://192.168.xxx.xxx?ip
-http://192.168.xxx.xxx?mac
-http://192.168.xxx.xxx?restart
-http://192.168.xxx.xxx?digitalwrite=pin;value
-http://192.168.xxx.xxx?analogwrite=pin;value
-http://192.168.xxx.xxx?flash=value        //value= 0~255 閃光燈
-http://192.168.xxx.xxx?getstill                 //取得視訊影像
-http://192.168.xxx.xxx?framesize=size     //size= UXGA|SXGA|XGA|SVGA|VGA|CIF|QVGA|HQVGA|QQVGA 改變影像解析度
-http://192.168.xxx.xxx?quality=value    // value = 10 to 63
-http://192.168.xxx.xxx?brightness=value    // value = -2 to 2
-http://192.168.xxx.xxx?contrast=value    // value = -2 to 2 
-
-查詢Client端IP：
-查詢IP：http://192.168.4.1/?ip
-重設網路：http://192.168.4.1/?resetwifi=ssid;password
-*/
-
-//輸入WIFI連線帳號密碼
 const char* ssid     = "*****";   //your network SSID
 const char* password = "*****";   //your network password
 
-//輸入AP端連線帳號密碼
+
 const char* apssid = "ESP32-CAM";
-const char* appassword = "12345678";    //AP端密碼至少要八個字元以上
+const char* appassword = "12345678";    
 
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
-#include "esp_camera.h"         //視訊
-#include "soc/soc.h"            //用於電源不穩不重開機
-#include "soc/rtc_cntl_reg.h"   //用於電源不穩不重開機
+#include "esp_camera.h"        
+#include "soc/soc.h"           
+#include "soc/rtc_cntl_reg.h"   
 
-String Feedback="";   //回傳客戶端訊息
-//指令參數值
+String Feedback="";   
 String Command="",cmd="",P1="",P2="",P3="",P4="",P5="",P6="",P7="",P8="",P9="";
-//指令拆解狀態值
+
 byte ReceiveState=0,cmdState=1,strState=1,questionstate=0,equalstate=0,semicolonstate=0;
 
 // WARNING!!! Make sure that you have either selected ESP32 Wrover Module,
 //            or another board which has PSRAM enabled
 
-//安可信ESP32-CAM模組腳位設定
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
 #define XCLK_GPIO_NUM      0
@@ -96,7 +61,7 @@ void ExecuteCommand()
   else if (cmd=="mac") {
     Feedback="STA MAC: "+WiFi.macAddress();
   }  
-  else if (cmd=="resetwifi") {  //重設WIFI連線
+  else if (cmd=="resetwifi") {  
     WiFi.begin(P1.c_str(), P2.c_str());
     Serial.print("Connecting to ");
     Serial.println(P1);
@@ -183,10 +148,10 @@ void ExecuteCommand()
 }
 
 void setup() {
-  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);  //關閉電源不穩就重開機的設定
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);  
   
   Serial.begin(115200);
-  Serial.setDebugOutput(true);  //開啟診斷輸出
+  Serial.setDebugOutput(true);  
   Serial.println();
 
   //視訊組態設定
@@ -232,18 +197,18 @@ void setup() {
 
   //drop down frame size for higher initial frame rate
   sensor_t * s = esp_camera_sensor_get();
-  s->set_framesize(s, FRAMESIZE_QVGA);  //UXGA|SXGA|XGA|SVGA|VGA|CIF|QVGA|HQVGA|QQVGA  設定初始化影像解析度
+  s->set_framesize(s, FRAMESIZE_QVGA);  //UXGA|SXGA|XGA|SVGA|VGA|CIF|QVGA|HQVGA|QQVGA 
 
-  //閃光燈
+ 
   ledcAttachPin(4, 4);  
   ledcSetup(4, 5000, 8);    
   
   WiFi.mode(WIFI_AP_STA);
   
-  //指定Client端靜態IP
+  
   //WiFi.config(IPAddress(192, 168, 201, 100), IPAddress(192, 168, 201, 2), IPAddress(255, 255, 255, 0));
 
-  WiFi.begin(ssid, password);    //執行網路連線
+  WiFi.begin(ssid, password);    
 
   delay(1000);
   Serial.println("");
@@ -254,16 +219,16 @@ void setup() {
   while (WiFi.status() != WL_CONNECTED) 
   {
       delay(500);
-      if ((StartTime+10000) < millis()) break;    //等待10秒連線
+      if ((StartTime+10000) < millis()) break;    
   } 
 
-  if (WiFi.status() == WL_CONNECTED) {    //若連線成功
-    WiFi.softAP((WiFi.localIP().toString()+"_"+(String)apssid).c_str(), appassword);   //設定SSID顯示客戶端IP         
+  if (WiFi.status() == WL_CONNECTED) {    
+    WiFi.softAP((WiFi.localIP().toString()+"_"+(String)apssid).c_str(), appassword);           
     Serial.println("");
     Serial.println("STAIP address: ");
     Serial.println(WiFi.localIP());  
 
-    for (int i=0;i<5;i++) {   //若連上WIFI設定閃光燈快速閃爍
+    for (int i=0;i<5;i++) {   
       ledcWrite(4,10);
       delay(200);
       ledcWrite(4,0);
@@ -273,7 +238,7 @@ void setup() {
   else {
     WiFi.softAP((WiFi.softAPIP().toString()+"_"+(String)apssid).c_str(), appassword);         
 
-    for (int i=0;i<2;i++) {    //若連不上WIFI設定閃光燈慢速閃爍
+    for (int i=0;i<2;i++) {    
       ledcWrite(4,10);
       delay(1000);
       ledcWrite(4,0);
@@ -281,7 +246,7 @@ void setup() {
     }
   }     
 
-  //指定AP端IP    
+ 
   //WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1), IPAddress(255, 255, 255, 0)); 
   Serial.println("");
   Serial.println("APIP address: ");
@@ -293,7 +258,7 @@ void setup() {
   server.begin();          
 }
 
-//自訂網頁首頁管理介面
+
 static const char PROGMEM INDEX_HTML[] = R"rawliteral(
   <!DOCTYPE html>
 <head>
@@ -613,13 +578,13 @@ void loop() {
       if (client.available()) {
         char c = client.read();             
         
-        getCommand(c);   //將緩衝區取得的字元拆解出指令參數
+        getCommand(c);  
                 
         if (c == '\n') {
           if (currentLine.length() == 0) {    
             
             if (cmd=="getstill") {
-              //回傳JPEG格式影像
+              
               camera_fb_t * fb = NULL;
               fb = esp_camera_fb_get();  
               if(!fb) {
@@ -657,7 +622,7 @@ void loop() {
               digitalWrite(4, LOW);               
             }
             else {
-              //回傳HTML首頁或Feedback
+              
               client.println("HTTP/1.1 200 OK");
               client.println("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
               client.println("Access-Control-Allow-Methods: GET,POST,PUT,DELETE,OPTIONS");
@@ -691,7 +656,7 @@ void loop() {
         }
 
         if ((currentLine.indexOf("/?")!=-1)&&(currentLine.indexOf(" HTTP")!=-1)) {
-          if (Command.indexOf("stop")!=-1) {  //若指令中含關鍵字stop立即斷線 -> http://192.168.xxx.xxx/?cmd=aaa;bbb;ccc;stop
+          if (Command.indexOf("stop")!=-1) {  
             client.println();
             client.println();
             client.stop();
@@ -707,7 +672,7 @@ void loop() {
   }
 }
 
-//拆解命令字串置入變數
+
 void getCommand(char c)
 {
   if (c=='?') ReceiveState=1;
